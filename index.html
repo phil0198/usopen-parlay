@@ -4,199 +4,204 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>US Open Parlay Tracker</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: 'Inter', sans-serif;
-      background-color: #f0f2f5;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
-      padding: 20px;
+      padding: 1rem;
+      background-color: #f0f2f5;
       color: #333;
     }
     header {
-      background-color: #002244;
-      color: #fff;
-      padding: 20px;
+      background: linear-gradient(135deg, #004d7a, #008793);
+      color: white;
+      padding: 2rem;
       text-align: center;
-      border-radius: 10px;
-      margin-bottom: 30px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    header h1 {
+      margin-bottom: 0.5rem;
     }
     .summary {
-      background: #fff;
-      padding: 15px;
-      border-left: 5px solid #007f5f;
-      margin-bottom: 20px;
-      font-weight: 600;
-      font-size: 1.1em;
-      border-radius: 5px;
+      font-size: 1.1rem;
     }
     .group {
-      background: #fff;
       border-radius: 8px;
-      padding: 15px;
-      margin-bottom: 25px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      border: 1px solid #ccc;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      background-color: #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
-    .group h2 {
-      margin-top: 0;
-      color: #002244;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 5px;
+    .group-title {
+      font-weight: 600;
+      font-size: 1.2rem;
+      margin-bottom: 0.75rem;
+      color: #004d7a;
     }
     .player {
       display: flex;
       flex-wrap: wrap;
-      justify-content: space-between;
       align-items: center;
-      padding: 8px 0;
-      border-bottom: 1px solid #f0f0f0;
+      margin-bottom: 0.75rem;
     }
-    .player:last-child {
-      border-bottom: none;
+    .player-name {
+      width: 180px;
+      font-size: 1rem;
     }
-    .player span {
-      flex: 1;
-      font-weight: 500;
+    .input {
+      width: 60px;
+      margin-right: 6px;
+      padding: 4px;
+      font-size: 0.95rem;
     }
-    .player input[type="number"] {
-      width: 45px;
-      padding: 3px;
-      margin: 0 4px;
-      text-align: center;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+    .score {
+      width: 120px;
+      font-weight: bold;
+      font-size: 0.95rem;
     }
     .highlight {
-      background-color: #e6f9f0;
+      background-color: gold;
+      padding: 2px 4px;
+      border-radius: 4px;
     }
-    #groups {
-      max-width: 900px;
-      margin: 0 auto;
+    .under-par {
+      color: #2e8b57;
     }
-    .controls {
-      text-align: center;
-      margin-bottom: 20px;
+    .over-par {
+      color: #b22222;
     }
-    .controls button {
-      padding: 10px 20px;
-      font-size: 16px;
-      border: none;
-      background-color: #007f5f;
-      color: white;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .controls button:hover {
-      background-color: #005f47;
+    .my-pick {
+      font-weight: bold;
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>US Open Parlay Tracker – Oakmont</h1>
-    <p>Track your picks, round-by-round scores, and group leaders live.</p>
+    <h1>US Open Parlay Tracker</h1>
+    <div id="summary" class="summary"></div>
   </header>
-
-  <div class="summary" id="summary">Tracking your picks...</div>
-  <div class="controls">
-    <button onclick="lockScoresPerRound()">Lock Each Round</button>
-  </div>
-  <div id="groups"></div>
+  <main id="app"></main>
 
   <script>
-    const parScorePerRound = 70;
-    const lockedRounds = {};
-
-    const data = {
-      A: ["Scottie Scheffler", "Rory Mcilroy", "Xander Schaufele", "Bryson Dechamebeu", "Jon Rahm"],
-      B: ["Ludvig Aberg", "Tommy Fleetwood", "Brooks Koepka", "Colin Morikawa", "Joaquin Nieman"],
-      C: ["Sepp Straka", "Viktor Hovland", "Patrick Cantlay", "Justin Thomas", "Hideki Matsuyama"],
-      D: ["Ben Griffin", "Tyrell Hatton", "Russell Henley", "Jordan Spieth", "Shane Lowry"],
-      E: ["Corey Conners", "Patrick Reed", "Matt Fitzpatrick", "Dustin Johnson", "Justin Rose"],
-      F: ["Daniel Berger", "Aaron Rai", "Tony Finau", "Keegan Bradley", "Cameron Smith"],
-      G: ["Si Woo Kim", "Harris English", "Robert Macintyre", "Sam Burns", "Jason Day"],
-      H: ["J.J. Spaun", "Taylor Pendrith", "Maverick McNealy", "Sungjae Im", "Denny McCarthy"],
-      I: ["Wyndham Clark", "J.T. Poston", "Min Woo Lee", "Nick Taylor", "Akshay Bhatia"],
-      J: ["Adam Scott", "Davis Thompson", "Brian Harman", "Michael Kim", "Andrew Novak"]
+    const groups = {
+      A: ["Scottie Scheffler*", "Rory McIlroy", "Xander Schauffele", "Bryson DeChambeau", "Jon Rahm"],
+      B: ["Ludvig Åberg", "Tommy Fleetwood", "Brooks Koepka", "Collin Morikawa*", "Joaquin Niemann"],
+      C: ["Sepp Straka", "Viktor Hovland", "Patrick Cantlay", "Justin Thomas*", "Hideki Matsuyama"],
+      D: ["Ben Griffin", "Tyrrell Hatton", "Russell Henley", "Jordan Spieth", "Shane Lowry*"],
+      E: ["Corey Conners", "Patrick Reed", "Matt Fitzpatrick*", "Dustin Johnson", "Justin Rose"],
+      F: ["Daniel Berger", "Aaron Rai*", "Tony Finau", "Keegan Bradley", "Cameron Smith"],
+      G: ["Si Woo Kim*", "Harris English", "Robert MacIntyre", "Sam Burns", "Jason Day"],
+      H: ["J.J. Spaun", "Taylor Pendrith", "Maverick McNealy", "Sungjae Im*", "Denny McCarthy"],
+      I: ["Wyndham Clark", "J.T. Poston", "Min Woo Lee*", "Nick Taylor", "Akshay Bhatia"],
+      J: ["Adam Scott", "Davis Thompson", "Brian Harman*", "Michael Kim", "Andrew Novak"]
     };
 
-    const yourPicks = [
-      "Scottie Scheffler", "Colin Morikawa", "Justin Thomas", "Shane Lowry", "Matt Fitzpatrick",
-      "Aaron Rai", "Si Woo Kim", "Sungjae Im", "Min Woo Lee", "Brian Harman"
-    ];
+    const app = document.getElementById("app");
 
-    const groupsContainer = document.getElementById("groups");
-
-    for (const group in data) {
+    function createPlayer(name, group) {
       const div = document.createElement("div");
-      div.className = "group";
-      div.innerHTML = `<h2>Group ${group}</h2>`;
-      data[group].forEach(name => {
-        const isPicked = yourPicks.includes(name);
-        div.innerHTML += `
-          <div class="player${isPicked ? ' highlight' : ''}">
-            <span>${name}${isPicked ? ' (your pick)' : ''}</span>
-            R1: <input type="number" class="score" data-name="${name}" data-round="1" value="0" />
-            R2: <input type="number" class="score" data-name="${name}" data-round="2" value="0" />
-            R3: <input type="number" class="score" data-name="${name}" data-round="3" value="0" />
-            R4: <input type="number" class="score" data-name="${name}" data-round="4" value="0" />
-            Total: <span id="total-${name.replace(/\s/g, '')}">E</span>
-          </div>`;
+      div.className = "player";
+
+      const label = document.createElement("span");
+      label.className = "player-name";
+      label.textContent = name.replace("*", "");
+      if (name.includes("*")) label.classList.add("my-pick");
+
+      const inputs = ["R1", "R2", "R3", "R4"].map(() => {
+        const input = document.createElement("input");
+        input.type = "number";
+        input.className = "input";
+        input.value = "";
+        input.addEventListener("input", update);
+        return input;
       });
-      groupsContainer.appendChild(div);
+
+      const scoreDisplay = document.createElement("span");
+      scoreDisplay.className = "score";
+
+      div.appendChild(label);
+      inputs.forEach(input => div.appendChild(input));
+      div.appendChild(scoreDisplay);
+
+      return { div, inputs, label, scoreDisplay, name };
     }
 
-    document.querySelectorAll(".score").forEach(input => {
-      input.addEventListener("input", () => {
-        updateScores();
+    const playersByGroup = {};
+
+    Object.entries(groups).forEach(([group, players]) => {
+      const section = document.createElement("div");
+      section.className = "group";
+
+      const title = document.createElement("div");
+      title.className = "group-title";
+      title.textContent = `Group ${group}`;
+      section.appendChild(title);
+
+      playersByGroup[group] = [];
+
+      players.forEach(name => {
+        const player = createPlayer(name, group);
+        playersByGroup[group].push(player);
+        section.appendChild(player.div);
       });
+
+      app.appendChild(section);
     });
 
-    function updateScores() {
-      // Prevent recalculating locked rounds
-      for (const round in lockedRounds) {
-        if (lockedRounds[round]) {
-          document.querySelectorAll(`input[data-round='${round}']`).forEach(input => input.disabled = true);
-        }
-      }
+    function update() {
+      let successful = 0, totalToPar = 0, myPickCount = 0;
+      Object.entries(playersByGroup).forEach(([group, players]) => {
+        let best = null;
+        let validScores = [];
 
-      let successful = 0;
-
-      for (const group in data) {
-        let bestScore = Infinity;
-        let winner = "";
-
-        data[group].forEach(name => {
-          const scores = Array.from(document.querySelectorAll(`input[data-name='${name}']`)).map(i => Number(i.value));
+        players.forEach(p => {
+          const scores = p.inputs.map(input => Number(input.value) || 0);
           const total = scores.reduce((a, b) => a + b, 0);
-          const roundsPlayed = scores.filter(n => n > 0).length;
-          const parTotal = parScorePerRound * roundsPlayed;
-          const relative = total - parTotal;
-          const display = relative === 0 ? 'E' : (relative > 0 ? '+' + relative : relative);
-
-          document.getElementById(`total-${name.replace(/\s/g, '')}`).textContent = display;
-
-          if (relative < bestScore) {
-            bestScore = relative;
-            winner = name;
-          }
+          const par = scores.filter(s => s > 0).length * 72;
+          const toPar = total - par;
+          p.total = toPar;
+          p.scoreDisplay.textContent = toPar > 0 ? `+${toPar}` : toPar < 0 ? `${toPar}` : "E";
+          p.scoreDisplay.className = "score";
+          if (toPar < 0) p.scoreDisplay.classList.add("under-par");
+          else if (toPar > 0) p.scoreDisplay.classList.add("over-par");
+          validScores.push(p);
         });
 
-        if (yourPicks.includes(winner)) successful++;
-      }
+        best = validScores.reduce((lowest, current) => {
+          return current.total < lowest.total ? current : lowest;
+        }, validScores[0]);
 
-      document.getElementById("summary").textContent = `${successful} of your 10 picks are currently leading their groups.`;
-    }
+        players.forEach(p => {
+          p.label.classList.remove("highlight");
+          if (p === best) p.label.classList.add("highlight");
+        });
 
-    function lockScoresPerRound() {
-      const roundToLock = prompt("Enter round number to lock (1-4):");
-      if (!['1', '2', '3', '4'].includes(roundToLock)) {
-        alert("Please enter a valid round number between 1 and 4.");
-        return;
-      }
-      lockedRounds[roundToLock] = true;
-      document.querySelectorAll(`input[data-round='${roundToLock}']`).forEach(input => input.disabled = true);
-      alert(`Round ${roundToLock} is now locked.`);
+        const bestScore = best.total;
+        const countBest = validScores.filter(p => p.total === bestScore).length;
+
+        if (countBest === 1) {
+          const myPick = validScores.find(p => p.name.includes("*"));
+          if (myPick && myPick === best) {
+            successful++;
+          }
+        }
+
+        validScores.forEach(p => {
+          if (p.name.includes("*")) {
+            myPickCount++;
+            totalToPar += p.total;
+          }
+        });
+      });
+
+      const avgToPar = myPickCount > 0 ? (totalToPar / myPickCount).toFixed(1) : 0;
+      const formattedAvg = avgToPar > 0 ? `+${avgToPar}` : avgToPar < 0 ? avgToPar : "E";
+      const formattedTotal = totalToPar > 0 ? `+${totalToPar}` : totalToPar < 0 ? totalToPar : "E";
+
+      document.getElementById("summary").innerHTML =
+        `<p><strong>Picks Winning:</strong> ${successful}/10 &nbsp;|&nbsp; <strong>Avg To Par:</strong> ${formattedAvg} &nbsp;|&nbsp; <strong>Total To Par:</strong> ${formattedTotal}</p>`;
     }
   </script>
 </body>
