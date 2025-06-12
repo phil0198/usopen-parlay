@@ -109,12 +109,18 @@
       label.textContent = name.replace("*", "");
       if (name.includes("*")) label.classList.add("my-pick");
 
-      const inputs = ["R1", "R2", "R3", "R4"].map(() => {
+      const inputs = ["R1", "R2", "R3", "R4"].map((round, index) => {
         const input = document.createElement("input");
         input.type = "number";
         input.className = "input";
-        input.value = "";
-        input.addEventListener("input", update);
+
+        const saved = localStorage.getItem(`${name}_${round}`);
+        if (saved) input.value = saved;
+
+        input.addEventListener("input", () => {
+          localStorage.setItem(`${name}_${round}`, input.value);
+          update();
+        });
         return input;
       });
 
