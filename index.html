@@ -159,7 +159,7 @@
         players.forEach(p => {
           const scores = p.inputs.map(input => Number(input.value) || 0);
           const total = scores.reduce((a, b) => a + b, 0);
-          const par = scores.filter(s => s > 0).length * 72;
+          const par = scores.filter(s => s > 0).length * 70;
           const toPar = total - par;
           p.total = toPar;
           p.scoreDisplay.textContent = toPar > 0 ? `+${toPar}` : toPar < 0 ? `${toPar}` : "E";
